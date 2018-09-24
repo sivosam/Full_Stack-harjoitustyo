@@ -19,8 +19,6 @@ const App = () => {
                 tehtavia: 14
             }
         ]
-
-
     }
 
     return (
@@ -66,4 +64,6 @@ const Osa = (props) => {
 
 
 ReactDOM.render(<App />, document.getElementById('root'));
+
+
 

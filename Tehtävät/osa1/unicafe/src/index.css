@@ -1,0 +1,75 @@
+body {
+  margin: 5;
+  padding: 0;
+  font-family: sans-serif;
+  font-weight: 200;
+  position: sticky;
+}
+
+h2, h3 {
+  border-top: 1px solid #4a91e9;
+  color:#4a91e9;
+  font-weight: 500;
+  font-size: 2em;
+  line-height: 24px;
+  padding-top: 15px;
+  text-align: center;
+  width: 100%;
+}
+
+p {
+padding: 5px;
+text-align: center;
+width: 100%;
+font-family: sans-serif;
+color: #4a91e9;
+}
+
+
+button {
+  color: #4a91e9;
+  padding: 5px 20px;
+  transition: background 1s; 
+  width: 100%;
+  background: #f4f7f8;
+  font-size: 14px;
+}
+
+button:hover {
+  background: rgb(238, 177, 235);
+  cursor: pointer; 
+  transition: background 1s; 
+}
+
+table {
+  margin: 5;
+  position: static;
+  width: 100%;
+}
+
+.eka {
+  font-family: sans-serif;
+  font-weight: 200;
+  padding: 20px;
+  text-align: left;
+  width: 33.3333%;
+  font-size: 14px;
+  background: #4a91e9;
+  color: #f4f7f8;
+}
+
+tr {
+  background: #f4f7f8;
+  border-bottom: 1px solid #FFF;
+  margin-bottom: 5px;
+  color: #4a91e9;
+}
+
+td {
+  font-family: sans-serif;
+  font-weight: 200;
+  padding: 20px;
+  text-align: left;
+  width: 33.3333%;
+  font-size: 14px;
+}

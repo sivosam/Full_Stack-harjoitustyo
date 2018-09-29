@@ -1,28 +1,25 @@
 import React from 'react'
+import Axios from 'axios'
 
 class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      persons: [
-        {
-          name: 'Arto Hellas',
-          number: "040-123456"
-        },
-        {
-          name: "Pekka Jaakkola",
-          number: "09-123"
-        },
-        {
-          name: "Arto Vuori",
-          number: "050-123424"
-        }
-      ],
+      persons: [],
       newName: '',
       newNumber: '',
       filter: ""
     }
   }
+
+  componentDidMount() {
+    Axios
+      .get('http://localhost:3001/persons')
+      .then(response => {
+        this.setState({ persons: response.data });
+      })
+  }
+
 
   addName = (event) => {
     event.preventDefault()
@@ -93,7 +90,7 @@ class App extends React.Component {
 }
 
 const NumberList = (props) => {
-  const filterList = props.state.persons.filter(p => p.name.includes(props.state.filter))
+  const filterList = props.state.persons.filter(p => p.name.toUpperCase().includes(props.state.filter.toUpperCase()))
   return (
     <ul>{filterList.map(person => <li key={person.name}>{person.name} {person.number}</li>)}</ul>
   )
@@ -108,10 +105,6 @@ const Filter = (props) => {
     </div>
   )
 }
-
-
-
-
 
 
 export default App

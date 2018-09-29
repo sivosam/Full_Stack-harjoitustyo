@@ -1,14 +1,26 @@
 import React from 'react'
 import Note from './components/Note'
+import Axios from 'axios';
 
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      notes: props.notes,
+      notes: [],
       newNote: "uusi muistiinpano",
       showAll: true
     }
+    console.log('constructor')
+  }
+
+  componentDidMount() {
+    console.log('mounted')
+    Axios
+      .get('http://localhost:3001/notes')
+      .then(response => {
+        console.log('promise fulfilled')
+        this.setState({ notes: response.data });
+      })
   }
 
   addNote = (event) => {
@@ -34,17 +46,18 @@ class App extends React.Component {
   }
 
   toggleVisible = () => {
-    this.setState({showAll: !this.state.showAll})
+    this.setState({ showAll: !this.state.showAll })
   }
 
   render() {
+    console.log('render')
     // const tulos = ehto ? val1 : val2
     const notesToShow =
-    this.state.showAll ?
-      this.state.notes :
-      this.state.notes.filter(note => note.important === true)
+      this.state.showAll ?
+        this.state.notes :
+        this.state.notes.filter(note => note.important === true)
 
-        const label = this.state.showAll ? "vain tärkeät" : "kaikki"
+    const label = this.state.showAll ? "vain tärkeät" : "kaikki"
 
     return (
       <div>
@@ -52,7 +65,7 @@ class App extends React.Component {
 
         <div>
           <button onClick={this.toggleVisible}>
-          Näytä {label}
+            Näytä {label}
           </button>
         </div>
 

@@ -49,7 +49,7 @@ class App extends React.Component {
           <div>
             <p>Capital: {c.capital}</p>
             <p>Population: {c.population}</p>
-            <img src={c.flag} width="590" height="360" />
+            <img src={c.flag} width="590" height="360" alt="Flag of the country" />
           </div>
 
         </div>

@@ -1,6 +1,6 @@
 import React from 'react'
 import Note from './components/Note'
-import Axios from 'axios';
+import noteService from './services/notes'
 
 class App extends React.Component {
   constructor(props) {
@@ -8,37 +8,36 @@ class App extends React.Component {
     this.state = {
       notes: [],
       newNote: "uusi muistiinpano",
-      showAll: true
+      showAll: true,
+      error: null
     }
-    console.log('constructor')
   }
 
   componentDidMount() {
-    console.log('mounted')
-    Axios
-      .get('http://localhost:3001/notes')
+    noteService
+      .getAll()
       .then(response => {
-        console.log('promise fulfilled')
-        this.setState({ notes: response.data });
+        this.setState({ notes: response });
       })
+
   }
 
   addNote = (event) => {
     event.preventDefault()
     const noteObject = {
       content: this.state.newNote,
-      date: new Date().toISOString(),
-      important: Math.random() > 0.5,
-      id: this.state.notes.length + 1
+      date: new Date(),
+      important: Math.random() > 0.5
     }
 
-    const notes = this.state.notes.concat(noteObject)
-
-    this.setState({
-      notes,
-      newNote: ""
-    });
-
+    noteService
+      .create(noteObject)
+      .then(response => {
+        this.setState({
+          notes: this.state.notes.concat(response),
+          newNote: ''
+        });
+      })
   }
 
   handleNoteChange = (event) => {
@@ -49,8 +48,32 @@ class App extends React.Component {
     this.setState({ showAll: !this.state.showAll })
   }
 
+  toggleImportanceOf = (id) => {
+    return () => {
+      const note = this.state.notes.find(n => n.id === id)
+      const changedNote = { ...note, important: !note.important }
+
+      noteService
+        .update(id, changedNote)
+        .then(response => {
+          const notes = this.state.notes.filter(n => n.id !== id)
+          this.setState({
+            notes: notes.concat(changedNote)
+          })
+        })
+        .catch(error => {
+          this.setState({
+            error: `muistiinpano '${note.content}' on jo poistettu palvelimelta`,
+            notes: this.state.notes.filter(n => n.id !== id)
+          })
+          setTimeout(() => {
+            this.setState({error: null})
+          }, 5000)
+        })
+    }
+  }
+
   render() {
-    console.log('render')
     // const tulos = ehto ? val1 : val2
     const notesToShow =
       this.state.showAll ?
@@ -63,6 +86,8 @@ class App extends React.Component {
       <div>
         <h1>Muistiinpanot</h1>
 
+        <Notification message={this.state.error}/>
+
         <div>
           <button onClick={this.toggleVisible}>
             Näytä {label}
@@ -70,7 +95,11 @@ class App extends React.Component {
         </div>
 
         <ul>
-          {notesToShow.map(note => <Note key={note.id} note={note} />)}
+          {notesToShow.map(note =>
+            <Note
+              key={note.id}
+              note={note}
+              toggleImportance={this.toggleImportanceOf(note.id)} />)}
         </ul>
         <form onSubmit={this.addNote}>
           <input value={this.state.newNote}
@@ -80,6 +109,17 @@ class App extends React.Component {
       </div>
     )
   }
+}
+
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null
+  }
+  return (
+    <div className="error">
+      {message}
+    </div>
+  )
 }
 
 export default App

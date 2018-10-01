@@ -1,5 +1,6 @@
 import React from 'react'
-import Axios from 'axios'
+import Person from './components/Person'
+import personService from './services/persons'
 
 class App extends React.Component {
   constructor(props) {
@@ -8,15 +9,16 @@ class App extends React.Component {
       persons: [],
       newName: '',
       newNumber: '',
-      filter: ""
+      filter: "",
+      message: null
     }
   }
 
   componentDidMount() {
-    Axios
-      .get('http://localhost:3001/persons')
+    personService
+      .getAll()
       .then(response => {
-        this.setState({ persons: response.data });
+        this.setState({ persons: response });
       })
   }
 
@@ -28,24 +30,54 @@ class App extends React.Component {
       number: this.state.newNumber
     }
 
-    let duplicate = false
+    let person = this.state.persons.find(p => p.name === nameObject.name)
 
-    this.state.persons.forEach(function (e) {
-      if (e.name === nameObject.name) {
-        alert("Nimi on jo listalla")
-        duplicate = true
+    if (person === undefined) {
+      personService
+        .create(nameObject)
+        .then(response => {
+          this.setState({
+            persons: this.state.persons.concat(response),
+            message: this.state.newName + " lisätty",
+            newName: '',
+            newNumber: ''
+          })
+          clearTimeout()
+          setTimeout(() => {
+            this.setState({ message: null })
+          }, 5000)
+        })
+    } else {
+      if (window.confirm(`${person.name} on jo luettelossa, korvataanko vanha numero uudella?`)) {
+        const updatedPerson = { ...person, number: nameObject.number }
+
+        personService
+          .update(person.id, nameObject)
+          .then(response => {
+            const persons = this.state.persons.filter(p => p.id !== person.id)
+            this.setState({
+              persons: persons.concat(updatedPerson),
+              message: updatedPerson.name + " päivitetty"
+            })
+            setTimeout(() => {
+              this.setState({ message: null })
+            }, 5000)
+          }).catch(e => {
+            const persons = this.state.persons.filter(p => p.id !== person.id)
+            this.setState({
+              message: "Kyseistä henkilöä ei enää löydy",
+              persons
+            })
+            setTimeout(() => {
+              this.setState({ message: null })
+            }, 5000)
+          })
+
+
       }
-    })
-    if (!duplicate) {
-      const persons = this.state.persons.concat(nameObject)
-
-      this.setState({
-        persons,
-        newName: "",
-        newNumber: ""
-      });
     }
   }
+
 
   handeNameChange = (event) => {
     this.setState({ newName: event.target.value });
@@ -58,11 +90,34 @@ class App extends React.Component {
     this.setState({ filter: event.target.value });
   }
 
+  deleteName = (id) => {
+    const x = this.state.persons.find(p => p.id === id)
+    return () => {
+      personService
+        .deletePerson(id)
+        .then(response => {
+          const persons = this.state.persons.filter(p => p.id !== id)
+          this.setState({
+            persons: persons,
+            message: x.name + " poistettu"
+          })
+          setTimeout(() => {
+            this.setState({ message: null })
+          }, 5000)
+        })
+        .catch(e => {
+          console.log(e)
+        })
+    }
+  }
+
 
   render() {
+    const filterList = this.state.persons.filter(p => p.name.toUpperCase().includes(this.state.filter.toUpperCase()))
     return (
       <div>
         <h2>Puhelinluettelo</h2>
+        <Notification message={this.state.message} />
         <Filter state={this.state} onChange={this.handleFilterChange} />
         <h3>Lisää uusi</h3>
         <form onSubmit={this.addName}>
@@ -83,16 +138,51 @@ class App extends React.Component {
         </form>
         <h2>Numerot</h2>
 
-        <NumberList state={this.state} />
+        <table>
+          <tbody>
+            {filterList.map(p =>
+              <Person
+                key={p.id}
+                person={p}
+                buttonHandler={this.deleteName(p.id)} />)}
+
+          </tbody>
+
+        </table>
+
+        {/* <NumberList state={this.state} /> */}
       </div>
     )
   }
 }
 
-const NumberList = (props) => {
-  const filterList = props.state.persons.filter(p => p.name.toUpperCase().includes(props.state.filter.toUpperCase()))
+//Ei millään suostunut toimimaan henkilön poistaminen kun oli erillisenä komponenttina tää lista...
+
+// const NumberList = (props) => {
+//   const filterList = props.state.persons.filter(p => p.name.toUpperCase().includes(props.state.filter.toUpperCase()))
+//   return (
+//     <table>
+//       <tbody>
+//         {filterList.map(p =>
+//           <Person key={p.id}
+//             person={p}
+//             buttonHandler={deleteName(p.id)} />
+//         )}
+//       </tbody>
+
+//     </table>
+
+//   )
+// }
+
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null
+  }
   return (
-    <ul>{filterList.map(person => <li key={person.name}>{person.name} {person.number}</li>)}</ul>
+    <div className="message">
+      {message}
+    </div>
   )
 }
 

@@ -62,6 +62,7 @@ class App extends React.Component {
           })
         })
         .catch(error => {
+          console.log(error)
           this.setState({
             error: `muistiinpano '${note.content}' on jo poistettu palvelimelta`,
             notes: this.state.notes.filter(n => n.id !== id)

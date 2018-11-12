@@ -52,9 +52,9 @@ class App extends React.Component {
         const updatedPerson = { ...person, number: nameObject.number }
 
         personService
-          .update(person.id, nameObject)
+          .update(person._id, nameObject)
           .then(response => {
-            const persons = this.state.persons.filter(p => p.id !== person.id)
+            const persons = this.state.persons.filter(p => p._id !== person._id)
             this.setState({
               persons: persons.concat(updatedPerson),
               message: updatedPerson.name + " päivitetty"
@@ -63,7 +63,7 @@ class App extends React.Component {
               this.setState({ message: null })
             }, 5000)
           }).catch(e => {
-            const persons = this.state.persons.filter(p => p.id !== person.id)
+            const persons = this.state.persons.filter(p => p._id !== person._id)
             this.setState({
               message: "Kyseistä henkilöä ei enää löydy",
               persons
@@ -91,12 +91,12 @@ class App extends React.Component {
   }
 
   deleteName = (id) => {
-    const x = this.state.persons.find(p => p.id === id)
+    const x = this.state.persons.find(p => p._id === id)
     return () => {
       personService
         .deletePerson(id)
         .then(response => {
-          const persons = this.state.persons.filter(p => p.id !== id)
+          const persons = this.state.persons.filter(p => p._id !== id)
           this.setState({
             persons: persons,
             message: x.name + " poistettu"
@@ -142,9 +142,9 @@ class App extends React.Component {
           <tbody>
             {filterList.map(p =>
               <Person
-                key={p.id}
+                key={p._id}
                 person={p}
-                buttonHandler={this.deleteName(p.id)} />)}
+                buttonHandler={this.deleteName(p._id)} />)}
 
           </tbody>
 

@@ -1,11 +1,15 @@
 import React from 'react'
-import noteService from './services/notes'
+import Note from './components/Note'
 import Notification from './components/Notification'
+import Togglable from './components/Togglable'
+import LoginForm from './components/LoginForm'
+import NoteForm from './components/NoteForm'
+import noteService from './services/notes'
 import loginService from './services/login'
 
 class App extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor() {
+    super()
     this.state = {
       notes: [],
       newNote: '',
@@ -17,17 +21,23 @@ class App extends React.Component {
     }
   }
 
-  componentDidMount() {
-    noteService.getAll().then(notes =>
-      this.setState({ notes })
-    )
+  componentWillMount() {
+    noteService
+      .getAll()
+      .then(notes => {
+        this.setState({ notes })
+      })
 
     const loggedUserJSON = window.localStorage.getItem('loggedNoteappUser')
     if (loggedUserJSON) {
       const user = JSON.parse(loggedUserJSON)
       this.setState({ user })
       noteService.setToken(user.token)
-    }
+    }    
+  }
+
+  toggleVisible = () => {
+    this.setState({ showAll: !this.state.showAll })
   }
 
   addNote = (event) => {
@@ -38,6 +48,8 @@ class App extends React.Component {
       important: Math.random() > 0.5
     }
 
+    this.noteForm.toggleVisibility()
+    
     noteService
       .create(noteObject)
       .then(newNote => {
@@ -49,20 +61,27 @@ class App extends React.Component {
   }
 
   toggleImportanceOf = (id) => {
-    // ...
-  }
+    return () => {
+      const note = this.state.notes.find(n => n.id === id)
+      const changedNote = { ...note, important: !note.important }
 
-
-  handleNoteChange = (event) => {
-    this.setState({ newNote: event.target.value })
-  }
-
-  handleLoginFieldChange = (event) => {
-    this.setState({ [event.target.name]: event.target.value })
-  }
-
-  toggleVisible = () => {
-    this.setState({ showAll: !this.state.showAll })
+      noteService
+        .update(id, changedNote)
+        .then(changedNote => {
+          this.setState({
+            notes: this.state.notes.map(note => note.id !== id ? note : changedNote)
+          })
+        })
+        .catch(error => {
+          this.setState({
+            error: `muistiinpano '${note.content}' on jo valitettavasti poistettu palvelimelta`,
+            notes: this.state.notes.filter(n => n.id !== id)
+          })
+          setTimeout(() => {
+            this.setState({ error: null })
+          }, 50000)
+        })
+    }
   }
 
   login = async (event) => {
@@ -76,9 +95,9 @@ class App extends React.Component {
       window.localStorage.setItem('loggedNoteappUser', JSON.stringify(user))
       noteService.setToken(user.token)
       this.setState({ username: '', password: '', user })
-    } catch (ex) {
+    } catch (exception) {
       this.setState({
-        error: 'virheellinen käyttäjätunnus tai salasana'
+        error: 'käyttäjätunnus tai salasana virheellinen',
       })
       setTimeout(() => {
         this.setState({ error: null })
@@ -86,51 +105,46 @@ class App extends React.Component {
     }
   }
 
-  logOut = () => {
-    window.localStorage.removeItem('loggedNoteappUser')
+  handleNoteChange = (event) => {
+    this.setState({ newNote: event.target.value })
+  }
+
+  handleLoginFieldChange = (event) => {
+    this.setState({ [event.target.name]: event.target.value })
+  }
+
+  toggleVisible = () => {
+    this.setState({ showAll: !this.state.showAll })
   }
 
   render() {
-    const loginForm = () => (
-      <div>
-        <h2>Kirjaudu</h2>
+    const notesToShow =
+      this.state.showAll ?
+        this.state.notes :
+        this.state.notes.filter(note => note.important === true)
 
-        <form onSubmit={this.login}>
-          <div>
-            käyttäjätunnus
-            <input
-              type="text"
-              name="username"
-              value={this.state.username}
-              onChange={this.handleLoginFieldChange}
-            />
-          </div>
-          <div>
-            salasana
-            <input
-              type="password"
-              name="password"
-              value={this.state.password}
-              onChange={this.handleLoginFieldChange}
-            />
-          </div>
-          <button type="submit">kirjaudu</button>
-        </form>
-      </div>
+    const label = this.state.showAll ? 'vain tärkeät' : 'kaikki'
+
+    const loginForm = () => (
+      <Togglable buttonLabel="login">
+        <LoginForm
+          visible={this.state.visible}
+          username={this.state.username}
+          password={this.state.password}
+          handleChange={this.handleLoginFieldChange}
+          handleSubmit={this.login}
+        />
+      </Togglable>
     )
 
     const noteForm = () => (
-      <div>
-        <h2>Luo uusi muistiinpano</h2>
-
-        <form onSubmit={this.addNote}>
-          <input
-            value={this.state.newNote}
-            onChange={this.handleNoteChange}
-          />
-          <button type="submit">tallenna</button>
-        </form>
-      </div>
+      <Togglable buttonLabel="new note" ref={component => this.noteForm = component}>
+        <NoteForm
+          onSubmit={this.addNote}
+          value={this.state.newNote}
+          handleChange={this.handleNoteChange}
+        />
+      </Togglable>
     )
 
     return (
@@ -143,20 +157,27 @@ class App extends React.Component {
           loginForm() :
           <div>
             <p>{this.state.user.name} logged in</p>
-            <button onClick={this.logOut()}>kirjaudu ulos</button>{noteForm()}
+            {noteForm()}
           </div>
         }
 
-        <h2>Muistiinpanot</h2>
-
-      // ...
+        <div>
+          <button onClick={this.toggleVisible}>
+            näytä {label}
+          </button>
+        </div>
+        <ul>
+          {notesToShow.map(note => 
+            <Note 
+              key={note.id} 
+              note={note} 
+              toggleImportance={this.toggleImportanceOf(note.id)}
+            />)}
+        </ul>
 
       </div>
     )
   }
 }
-
-
-
 
 export default App

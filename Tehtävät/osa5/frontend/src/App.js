@@ -3,6 +3,9 @@ import Blog from './components/Blog'
 import blogService from './services/blogs'
 import loginService from './services/login'
 import Notification from './components/Notification'
+import BlogForm from './components/BlogForm'
+import LoginForm from './components/LoginForm'
+import Togglable from './components/Togglable'
 
 class App extends React.Component {
   constructor(props) {
@@ -87,89 +90,74 @@ class App extends React.Component {
     } catch (ex) {
       console.log(ex)
     }
+  }
 
+  updateBlog = async (id) => {
+    const x = this.state.blogs.find(b => b._id === id)
+
+    try {
+      const updatedBlog = {
+        title: x.title,
+        author: x.author,
+        url: x.url,
+        user: x.user,
+        likes: x.likes + 1
+      }
+      blogService.update(id, updatedBlog)
+    } catch (ex) {
+      console.log(ex)
+    }
   }
 
 
   render() {
 
     const loginForm = () => (
-      <div>
-        <h2>Login</h2>
-
-        <Notification message={this.state.message} className="message" />
-
-        <form onSubmit={this.login}>
-          <div>
-            Username:
-          <input
-              type="text"
-              name="username"
-              value={this.state.username}
-              onChange={this.handleFieldChange} />
-          </div>
-          <div>
-            Password:
-            <input
-              type="password"
-              name="password"
-              value={this.state.password}
-              onChange={this.handleFieldChange} />
-          </div>
-          <button type="submit">Login</button>
-        </form>
-      </div >
+      <LoginForm
+        visible={this.state.visible}
+        username={this.state.username}
+        password={this.state.password}
+        handleChange={this.handleFieldChange}
+        handleSubmit={this.login} />
     )
 
     const blogForm = () => (
-      <div>
-        <h2>Blogs</h2>
-
-        <Notification message={this.state.message} className="confirm" />
-
-        <p>{this.state.user.name} logged in <button onClick={this.logout}>Logout</button></p>
-
-        <h2>Add a new blog</h2>
-        <form onSubmit={this.addBlog}>
-          <div>
-            Title:
-          <input
-              type="text"
-              name="title"
-              value={this.state.title}
-              onChange={this.handleFieldChange} />
-          </div>
-          <div>
-            Author:
-          <input
-              type="text"
-              name="author"
-              value={this.state.author}
-              onChange={this.handleFieldChange} />
-          </div>
-          <div>
-            URL:
-          <input
-              type="text"
-              name="url"
-              value={this.state.url}
-              onChange={this.handleFieldChange} />
-          </div>
-          <button type="submit">Add</button>
-        </form>
-
-        <div>
-          {this.state.blogs.map(blog =>
-            <Blog key={blog._id} blog={blog} />
-          )}</div>
-
-      </div>
+      <Togglable buttonLabel="Add">
+        <BlogForm
+          visible={this.state.visible}
+          title={this.state.title}
+          author={this.state.author}
+          url={this.state.url}
+          handleChange={this.handleFieldChange}
+          handleSubmit={this.addBlog} />
+      </Togglable>
     )
+    this.state.blogs.sort((a, b) => {
+      return b.likes - a.likes
+    })
 
     return (
       <div>
         {this.state.user === null ?
-          loginForm() : blogForm()}
+          <div>
+            <h2>Login</h2>
+            <Notification message={this.state.message} className="error" />
+            {loginForm()}
+          </div>
+          :
+          <div>
+            <h2>Blogs</h2>
+            <Notification message={this.state.message} className="confirm" />
+            <p>{this.state.user.name} logged in <button onClick={this.logout}>Logout</button></p>
+
+            {blogForm()}
+            <div>
+              {this.state.blogs.map(blog =>
+                <Blog key={blog._id} blog={blog} handleUpdate={() => this.updateBlog(blog._id)} />
+              )}</div>
+
+          </div>
+        }
       </div>
     );
   }

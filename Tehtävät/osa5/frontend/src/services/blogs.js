@@ -21,4 +21,9 @@ const setToken = (newToken) => {
   token = `bearer ${newToken}`
 }
 
-export default { getAll, setToken, create }
+const update = async (id, newObject) => {
+  const response = await axios.put(`${baseUrl}/${id}`, newObject)
+  return response.data
+}
+
+export default { getAll, setToken, create, update }

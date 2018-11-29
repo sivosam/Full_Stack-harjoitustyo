@@ -2,22 +2,16 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { anecdoteVote } from './../reducers/anecdoteReducer'
 import { changeNotification } from './../reducers/notificationReducer'
-import anecdoteService from '../services/anecdotes'
 
 class AnecdoteList extends React.Component {
 
   voteAnecdote = async (id) => {
     const anecdoteToUpdate = this.props.visibleAnecdotes.find(a => a.id === id)
-    try {
-      const updatedAnecdote = {
-        content: anecdoteToUpdate.content,
-        votes: anecdoteToUpdate.votes + 1
-      }
-      anecdoteService.update(id, updatedAnecdote)
-    } catch (ex) {
-      console.log(ex)
+    const updatedAnecdote = {
+      content: anecdoteToUpdate.content,
+      votes: anecdoteToUpdate.votes + 1
     }
-    this.props.anecdoteVote(id)
+    this.props.anecdoteVote(id, updatedAnecdote)
   }
   render() {
     return (
@@ -31,7 +25,7 @@ class AnecdoteList extends React.Component {
               has {anecdote.votes}
               <button onClick={() => {
                 this.voteAnecdote(anecdote.id)
-                this.props.changeNotification(`you voted '${anecdote.content}'`)
+                this.props.changeNotification(`you voted '${anecdote.content}'`, 5)
                 setTimeout(() => {
                   this.props.changeNotification('')
                 }, 5000)

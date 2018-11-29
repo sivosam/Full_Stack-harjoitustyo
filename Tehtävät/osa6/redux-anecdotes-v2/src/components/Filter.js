@@ -1,13 +1,12 @@
 import React from 'react'
+import { connect } from 'react-redux'
 import { changeFilter } from './../reducers/filterReducer'
 
 class Filter extends React.Component {
   handleChange = (event) => {
     event.preventDefault()
     const filter = event.target.value
-    this.props.store.dispatch(
-      changeFilter(filter)
-    )
+    this.props.changeFilter(filter)
   }
   render() {
     const style = {
@@ -22,4 +21,7 @@ class Filter extends React.Component {
   }
 }
 
-export default Filter
+export default connect(
+  null,
+  { changeFilter }
+)(Filter)
